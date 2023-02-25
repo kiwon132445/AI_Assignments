@@ -10,9 +10,9 @@ from feature_analysis import *
 class NIDS_Class:
     
     #Initialization method
-    def __init__(self, csv_name, c_method_name, task):
+    def __init__(self, csv_name, c_method, task):
         self.csv_name = csv_name
-        self.c_method_name = c_method_name
+        self.c_method = c_method
         self.task = task
         
         self.setup()
@@ -66,16 +66,19 @@ def main():
         return -1
     elif len(sys.argv) == 4:
         csv_name = sys.argv[1]
-        c_method_name = sys.argv[2]
+        c_method = sys.argv[2]
         task = sys.argv[3]
         
-        print(csv_name)
+        ndis = NIDS_Class(csv_name, c_method, task)
         return 0
     elif len(sys.argv) == 5:
         csv_name = sys.argv[1]
-        c_method_name = sys.argv[2]
+        c_method = sys.argv[2]
         task = sys.argv[3]
         model_name = sys.argv[4]
+        
+        ndis = NIDS_Class(csv_name, c_method, task)
+        ndis.add_model_name(model_name)
         return 0
     
     print("Incorrect arguments")
