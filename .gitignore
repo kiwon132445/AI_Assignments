@@ -1,1 +1,3 @@
 *.csv\n
+.ipynb_checkpoints
+.vs
