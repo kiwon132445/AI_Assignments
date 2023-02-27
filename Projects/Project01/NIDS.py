@@ -3,7 +3,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from NIDS_Manager import *
-from feature_analysis import *
 
 #main function
 def main():
