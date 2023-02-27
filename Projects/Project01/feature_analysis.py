@@ -6,19 +6,21 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 
 class FeatureAnalysis:
-    def __init__ (self, minimum_features=10, step=5):
+    
+    def rfecv_init(self, minimum_features=10, step=5):
         self.step = step
         self.rfecv = RFECV(estimator=LogisticRegression(), step=step, cv=5, min_features_to_select=minimum_features)
+        
     def rfecv_fit(self, x, y):
         self.rfecv.fit(x, y)
         
-    def rfecv_x(self, x):
-        return x[x.columns[self.rfecv.support_]]
+    def rfecv_support_(self):
+        return self.rfecv.support_
     
     def rfecv_score(self):
         return self.rfecv.score
     
-    def rfecv_plotting(self):
+    def rfecv_select_plot(self):
         plt.figure()
         plt.xlabel("Number of features selected")
         plt.ylabel("Mean cross validation score")
