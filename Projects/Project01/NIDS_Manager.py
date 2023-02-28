@@ -95,7 +95,7 @@ class NIDS_Manager:
         pickle.dump(model, open(filename, 'wb'))
     
     #for custom saves such as feature selector
-    def save_model(self, model, path):
+    def save_feature_model(self, model, path):
         print("Feature Selection Complete")
         filename = path
         pickle.dump(model, open(filename, 'wb'))
@@ -339,7 +339,7 @@ class NIDS_Manager:
         important = self.LassoCV_important(x, y)
         self.x_train = self.x_train[important]
         self.x_test = self.x_test[important]
-        self.save_model(self.fa.LassoCV, "./Save/LassoCV.sav")
+        self.save_feature_model(self.fa.LassoCV, "./Save/LassoCV.sav")
         
     def LassoCV_fit(self, x, y):
         self.fa.LassoCV_fit(x, y);
