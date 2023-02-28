@@ -1,5 +1,5 @@
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.svm import SVC
+from sklearn.svm import SVC, LinearSVC
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -15,7 +15,7 @@ class Classifier:
     # P1
     # Logistic Regression CV
     def logistic_init(self):
-        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV(class_weight='balanced', scoring='balanced_accuracy'))
+        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV())
         
     def logistic_fit(self, x, y):
         self.log_reg.fit(x, y)
@@ -31,9 +31,10 @@ class Classifier:
     
     #
     # P2
-    #Support Vector Classification (SVC)
+    #Linear Support Vector Classification (LinearSVC)
     def svc_init(self):
-        self.svc = make_pipeline(StandardScaler(), SVC())
+        #self.svc = make_pipeline(StandardScaler(), SVC())
+        self.svc = make_pipeline(StandardScaler(), LinearSVC())
     
     def svc_fit(self, x, y):
         self.svc.fit(x, y)
