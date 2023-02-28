@@ -94,14 +94,19 @@ class NIDS_Manager:
         filename = "./Save/" + self.c_method + "_" + self.task + ".sav"
         pickle.dump(model, open(filename, 'wb'))
     
-    def load_model(self):
-        filename = "./Save/" + self.c_method + "_" + self.task + ".sav"
-        if os.path.isfile(filename):
-            return pickle.load(filename)
-        else:
-            print("No such file exists, starting new model")
-            return -1
+    #for custom saves such as feature selector
+    def save_model(self, model, path):
+        print("Feature Selection Complete")
+        filename = path
+        pickle.dump(model, open(filename, 'wb'))
+        print("Feature Selector saved")
     
+    def load_model(self, path):
+        filename = path
+        if os.path.isfile(filename):
+            return pickle.load(open(filename, 'rb'))
+        else:
+            print("(" + path + ")" + "No such file exists, starting new model")
     ##########################################################################################
     #
     # Command line runner
@@ -153,8 +158,8 @@ class NIDS_Manager:
         print("Logistic Regression CV Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.log_reg = model
             
         # attack_cat
@@ -170,8 +175,8 @@ class NIDS_Manager:
         print("Linear Support Vector Classification Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.svc = model
         
         # attack_cat
@@ -187,8 +192,8 @@ class NIDS_Manager:
         print("Gaussian Naive Bayes Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.log_reg = model
         
         # attack_cat
@@ -204,8 +209,8 @@ class NIDS_Manager:
         print("Decision Tree Classifier Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.dtc = model
         
         # attack_cat
@@ -221,8 +226,8 @@ class NIDS_Manager:
         print("AdaBoost Classification Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.ada = model
         
         # attack_cat
@@ -238,8 +243,8 @@ class NIDS_Manager:
         print("K Neighbors Classifier Running...")
         
         if self.model_name != "":
-            model = self.load_model(model_name)
-            if model == -1:
+            model = self.load_model(self.model_name)
+            if model is not None:
                 self.classifier.ada = model
         
         # attack_cat
@@ -260,6 +265,11 @@ class NIDS_Manager:
         elif fa_type == 'PCA':
             self.fa.pca_init()
         elif fa_type == 'LCV':
+            fa_model = self.load_model("./Save/LassoCV.sav")
+            if fa_model is not None:
+                self.fa.LassoCV = fa_model
+                print("Feature Selector loaded")
+                return 0
             self.fa.LassoCV_init()
         elif fa_type == '':
             return 0
@@ -275,7 +285,7 @@ class NIDS_Manager:
         self.rfecv_fit(x, y)
         self.x_train = self.rfecv_x(self.x_train)
         self.x_test = self.rfecv_x(self.x_test)
-        
+    
     def rfecv_fit(self, x, y):
         self.fa.rfecv_fit(x, y)
     
@@ -329,8 +339,8 @@ class NIDS_Manager:
         important = self.LassoCV_important(x, y)
         self.x_train = self.x_train[important]
         self.x_test = self.x_test[important]
-        return 0
-    
+        self.save_model(self.fa.LassoCV, "./Save/LassoCV.sav")
+        
     def LassoCV_fit(self, x, y):
         self.fa.LassoCV_fit(x, y);
     
