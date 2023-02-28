@@ -67,9 +67,8 @@ data['dstip'] = preprocessing.LabelEncoder().fit_transform(data['dstip'])
 # print(data.iloc[:500])
 
 """**Data Split Validation and Training Set**
-###x: Feature data
-###y: Target data
-
+x: Feature data
+y: Target data
 
 """
 
@@ -85,9 +84,9 @@ label = data['Label']
 x_train, x_val, attack_cat_train, attack_cat_val, label_train, label_val = train_test_split(x, attack_cat, label, test_size = 0.1, random_state = 42)
 
 """
+**Regression Analysis Process** PART 1
+"""
 
-
-**Regression Analysis Process**"""
 
 
 # Create a linear regression model
@@ -110,8 +109,7 @@ important_features_label = [feature for feature, coef in zip(x.columns, label_mo
 # selected_feature_indices_ac = attack_cat_model.coef_ != 0
 # selected_feature_indices_label = attack_cat_model.coef_ != 0
 
-# # Get the names of the selected features
-
+# Get the names of the selected features for boolean list
 # important_features_ac = [x.columns[i] for i in range(len(x.columns)) if selected_feature_indices_ac[i]]
 # important_features_label = [x.columns[i] for i in range(len(x.columns)) if selected_feature_indices_label[i]]
 
@@ -120,28 +118,28 @@ print("Selected features for label: ", important_features_label)
 
 
 
-"""Drawing Feature Association Plot
+"""Drawing Feature Association Plot ------------------------------------------------------"""
 
-"""
+# import matplotlib.pyplot as plt
+# from matplotlib.pyplot import figure
 
-import matplotlib.pyplot as plt
-from matplotlib.pyplot import figure
+# figure(figsize=(15, 18), dpi=80)
+# plt.rcParams.update({'font.size': 15})
 
-figure(figsize=(15, 18), dpi=80)
-plt.rcParams.update({'font.size': 15})
-
-# Plot the feature importance
-plt.title("Strength of Feature Association For Attack Category")
-plt.xlabel("Association Coefficient")
-plt.ylabel("Feature")
-plt.barh(x.columns, abs(attack_cat_model.coef_))
+# # Plot the feature importance
+# plt.title("Strength of Feature Association For Attack Category")
+# plt.xlabel("Association Coefficient")
+# plt.ylabel("Feature")
+# plt.barh(x.columns, abs(attack_cat_model.coef_))
 # plt.savefig('LinearRegressionFeatureAnalysisGraph.png', bbox_inches='tight', facecolor='w')
-# plt.show
+# # plt.show
 
-"""**Splitting Training and Testing for Label and Attack Category Target**"""
 
 # split dataset (70% train, 30% test)
 x_train, x_test, y_attack_cat_train, y_attack_cat_test, y_label_train, y_label_test = train_test_split(x, attack_cat, label, test_size = 0.3, random_state = 42)
+
+
+# Dropping Features --------------------------------------------------
 
 # x_train = x_train[important_features_label]
 # x_test = x_test[important_features_label]
@@ -151,11 +149,11 @@ x_train = x_train[important_features_ac]
 x_test = x_test[important_features_ac]
 x_val = x_val[important_features_ac]
 
-# Apply Feature Selection
+new_features = [range(1,48)]
+predicted_y = model.predict(new_features)
 
-"""##**Part 2 - Label Classification**
-
-**AdaBoost classification Label**
+"""
+Part 2 - Label Classification - AdaBoost classification Label ----------------------------------------------------------------------------
 """
 
 clf = AdaBoostClassifier(n_estimators=100, random_state=0)
@@ -167,7 +165,7 @@ label_pred = clf.predict(x_test)
 # Calculate the accuracy of the predictions
 accuracy = f1_score(y_label_test, label_pred)
 
-print("accuracy: ", accuracy)
+print("AdaBoost accuracy: ", accuracy)
 
 
 """##**Part 3 - Attack Category Classification**"""
@@ -183,23 +181,8 @@ attack_cat_pred = clf_attack_cat.predict(x_test)
 # Calculate the accuracy of the predictions
 accuracy = f1_score(y_attack_cat_test, attack_cat_pred, average='macro')
 
-print("accuracy: ", accuracy)
+print("KNeighborsClassifier p3 accuracy: ", accuracy)
 print("mean: ", np.mean(y_attack_cat_test == attack_cat_pred))
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
-# Print model coefficients
-# print('Intercept:', model.intercept_)
-# print('Coefficients:', model.coef_)
-
-# # Evaluate the model's performance
-# y_pred = model.predict(x)
-# mse = np.mean((y - y_pred) ** 2)
-# r_squared = model.score(x, y)
-# print('Mean Squared Error:', mse)
-# print('R-squared:', r_squared)
-
-# #validation code
-# new_features = [range(1,48)]
-# predicted_y = model.predict(new_features)
-# print('Predicted Y:', predicted_y)
