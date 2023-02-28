@@ -1,49 +1,31 @@
+from feature_analysis import *
+from classifier import *
+
 import pandas as pd
 import sklearn
 import pickle
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-
-from feature_analysis import *
-from classifier import *
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
 
 class NIDS_Manager:
     goal_columns = ['attack_cat', 'Label']
     
     #Initialization method
-    def __init__(self, csv_name, c_method, task, model_name=""):
+    def __init__(self, csv_name, c_method, task, model_name="", feature_name="RFECV"):
         self.csv_name = csv_name
         self.c_method = c_method
         self.task = task
         self.model_name = model_name
+        self.feature_name = feature_name
         
+        self.command_line_runner()
         self.setup()
-        self.feature_analysis_init("RFECV")
-        self.classifier_init()
-    
-    #split csv into x and y with 'goal_columns' as y
-    def x_and_y_split(self):
-        self.x = self.nids.drop(columns=self.goal_columns)
-        self.y_attack_cat = self.nids['attack_cat']
-        self.y_label = self.nids['Label']
-    
-    #get set x value
-    def get_x(self):
-        return self.x
-    def set_x(self, x):
-        self.x = x
-    
-    #get set y value
-    def get_y(self):
-        return self.y_attack_cat, self.y_label
-    def set_y_attack_cat(self, y):
-        self.y_attack_cat = y
-    def set_y_label(self, y):
-        self.y_label = y
-    
-    def train_test_split(self):
-        self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3, random_state=1)
+        if self.classifier_init() == -1:
+            return -1
+        self.feature_analysis_init(feature_name)
     
     #return the csv content
     def get_csv(self):
@@ -87,27 +69,137 @@ class NIDS_Manager:
         
         self.nids.dropna(axis='rows', subset=['attack_cat', 'sport', 'dsport'], inplace=True)
     
+    #----------------------------------------------#
+    #split csv into x and y with 'goal_columns' as y
+    def x_and_y_split(self):
+        self.x = self.nids.drop(columns=self.goal_columns)
+        self.y_attack_cat = self.nids['attack_cat']
+        self.y_label = self.nids['Label']
+    
+    #split data into training and testing sets
+    def train_test_split(self):
+        self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3, random_state=1)
+    
+    ##########################################################################################
+    #
+    # Command line runner
+    def command_line_runner(self):
+        if self.c_method == 'LRCV':
+            self.LRCV_runner()
+        elif self.c_method == 'SVC':
+            self.SVC_runner()
+        elif self.c_method == 'GNB':
+            self.GNB_runner()
+        elif self.c_method == 'DTC':
+            self.DTC_runner()
+    
+    def task_checker(self):
+        if self.task == 'attack_cat':
+            return 1
+        elif self.task == 'label':
+            return 2
+        else:
+            print('No such task exists in code\n\
+            options:\n\
+            \t - attack_cat\n\
+            \t - label')
+            
+            return -1
+    #----------------------------------------------#
+    def LRCV_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        return 0
+    
+    def SVC_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        return 0
+    
+    def GNB_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        
+        return 0
+    
+    def DTC_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        
+        return 0
+    
     ##########################################################################################
     #feature analysis initializer
     def feature_analysis_init(self, fa_type):
         self.fa = FeatureAnalysis()
         if fa_type == 'RFECV':
             self.fa.rfecv_init()
+        if fa_type == 'PCA':
+            self.fa.pca_init()
+    #----------------------------------------------#
     #
     #
-    #feature analysis (Recursive Feature Elimination with Logistic Regression)
-    def rfecv_fit(self):
-        self.fa.rfecv_init()
-        
-        self.fa.rfecv_fit(self.x_train, self.y_train_attack)
-        self.fa.rfecv_fit(self.x_train, self.y_train_label)
+    #Recursive Feature Elimination CV (RFECV) with Logistic Regression
+    def rfecv_fit(self, x, y):
+        self.fa.rfecv_fit(x, y)
     
-    def rfecv_x(self):
-        support = self.fa.rfecv_support_()
-        return self.x[self.x.columns[support]]
+    def rfecv_x(self, x):
+        return x[self.rfecv_selected_features()]
     
-    def rfecv_select_plot(self):
+    def rfecv_x_specific_select(self, x, sf):
+        return x[sf]
+    
+    def rfecv_selected_features(self):
+        return self.x.columns[self.fa.rfecv_support_()]
+    
+    def rfecv_score(self, x, y):
+        return self.fa.rfecv_score(x, y)
+    
+    def rfecv_plot(self):
         self.fa.rfecv_select_plot()
+    
+    #----------------------------------------------#
+    #
+    #Principal Component Analysis
+    def pca_fit_transform(self, x):
+        return self.fa.pca_fit_transform(x)
+    
+    #remove the chose features from x
+    def pca_x(self, x):
+        return pd.DataFrame(data=x, columns=self.fa.pca.get_feature_names_out())
+    
+    #get explained variance
+    def pca_get_e_variance(self):
+        return self.fa.pca[1].explained_variance_
+    
+    #show explained variance bar
+    def pca_e_var_bar(self):
+        plt.bar(range(1,len(self.pca_get_e_variance())+1), self.pca_get_e_variance())
+
+        plt.xlabel('PCA Feature')
+        plt.ylabel('Explained variance')
+        plt.title('Feature Explained Variance')
+        plt.show()
     
     ##########################################################################################
     #Classifier initializer
@@ -118,15 +210,52 @@ class NIDS_Manager:
                 self.classifier.logistic_init()
             elif self.c_method == 'SVC':
                 self.classifier.svc_init()
+            elif self.c_method == 'GNB':
+                self.classifier.gauss_init()
+            elif self.c_method == 'DTC':
+                self.classifier.dtc_init()
+            else:
+                print('No such Classification method exists in code\n\
+                ---------------------\n\
+                options:\n\
+                    \t - LRCV = Logistic Regression CV\n\
+                    \t - SVC  = Support Vector Classification\n\
+                    \t - GNB  = Gaussian Naive Bayes\n\
+                    \t - DTC  = Decision Tree Classifier\n\
+                ---------------------')
+                return -1
         else:
             if c_type == 'LRCV':
                 self.classifier.logistic_init()
             elif c_type == 'SVC':
                 self.classifier.svc_init()
+            elif c_type == 'GNB':
+                self.classifier.gauss_init()
+            elif c_type == 'DTC':
+                self.classifier.dtc_init()
+            else:
+                print('No such Classification method exists in code\n\
+                ---------------------\n\
+                options:\n\
+                    \t - LRCV = Logistic Regression CV\n\
+                    \t - SVC  = Support Vector Classification\n\
+                    \t - GNB  = Gaussian Naive Bayes\n\
+                    \t - DTC  = Decision Tree Classifier\n\
+                ---------------------')
+                return -1
+        return 0
     
+    def print_model_acc_score(self, y_test, pred):
+        print('Model accuracy score:  {0:0.4f}'. format(accuracy_score(y_test, pred)))
+        
+    def print_class_report(self, y_test, pred):
+        print('Classifier: Principal Component Analysis (PCA) \n')
+        print(classification_report(y_test, pred))
+    
+    #----------------------------------------------#
     #
     #
-    #Classifier (Logistic Regression CV)
+    # Logistic Regression CV (LRCV)
     def run_logistic(self, x_train, x_test, y_train, y_test):
         self.logistic_fit(x_train, y_train)
         pred = self.logistic_pred(x_test)
@@ -142,7 +271,7 @@ class NIDS_Manager:
     
     #
     #
-    #Classifier Support Vector Classification
+    # Support Vector Classification (SVC)
     def run_svc(self, x_train, x_test, y_train, y_test):
         self.svc_fit(x_train, y_train)
         pred = self.svc_pred(x_test)
@@ -155,21 +284,21 @@ class NIDS_Manager:
         return self.classifier.svc_pred(x_test)
     def svc_score(self, x_test, y_test):
         return self.classifier.svc_score(x_test, y_test)
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    
+    #----------------------------------------------#
+    #
+    #
+    # Gaussian Naive Bayes (GaussianNB)
+    def gauss_fit(self, x, y):
+        self.classifier.gauss_fit(x, y)
+    
+    def gauss_pred(self, x):
+        self.classifier.gauss_pred(x)
+    #
+    #
+    # Decision Tree Classifier
+    def dtc_fit(self, x, y):
+        self.classifier.dtc_fit(x, y)
+    
+    def dtc_pred(self, x):
+        return self.classifier.dtc_pred(x)

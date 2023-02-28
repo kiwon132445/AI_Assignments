@@ -1,15 +1,21 @@
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC, LinearSVC
+
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 
 class Classifier:
     
+    ###########################################################################################################
+    # Kiwon's section
     #
-    #
+    # P1
     # Logistic Regression CV
     def logistic_init(self):
-        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV(class_weight='balanced', scoring='balanced_accuracy'))
+        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV())
         
     def logistic_fit(self, x, y):
         self.log_reg.fit(x, y)
@@ -24,10 +30,11 @@ class Classifier:
         return self.log_reg
     
     #
-    #
-    #Support Vector Classification (SVC)
+    # P2
+    #Linear Support Vector Classification (LinearSVC)
     def svc_init(self):
-        self.svc = make_pipeline(StandardScaler(), SVC())
+        #self.svc = make_pipeline(StandardScaler(), SVC())
+        self.svc = make_pipeline(StandardScaler(), LinearSVC())
     
     def svc_fit(self, x, y):
         self.svc.fit(x, y)
@@ -40,3 +47,29 @@ class Classifier:
     
     def get_svc(self):
         return self.svc
+    
+    ###########################################################################################################
+    # June's section
+    #
+    # P1
+    # Gaussian Naive Bayes (GaussianNB)
+    def gauss_init(self):
+        self.gauss = make_pipeline(RobustScaler(), GaussianNB())
+    
+    def gauss_fit(self, x, y):
+        self.gauss.fit(x, y)
+    
+    def gauss_pred(self, x):
+        self.gauss.pred(x)
+    
+    #
+    # P2
+    # Decision Tree Classifier
+    def dtc_init(self):
+        self.dtc = make_pipeline(StandardScaler(), DecisionTreeClassifier())
+    
+    def dtc_fit(self, x, y):
+        self.dtc.fit(x, y)
+    
+    def dtc_pred(self, x):
+        return self.dtc.pred(x)
