@@ -15,7 +15,7 @@ class Classifier:
     # P1
     # Logistic Regression CV
     def logistic_init(self):
-        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV())
+        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV(cv=3))
         
     def logistic_fit(self, x, y):
         self.log_reg.fit(x, y)
@@ -33,7 +33,6 @@ class Classifier:
     # P2
     #Linear Support Vector Classification (LinearSVC)
     def svc_init(self):
-        #self.svc = make_pipeline(StandardScaler(), SVC())
         self.svc = make_pipeline(StandardScaler(), LinearSVC())
     
     def svc_fit(self, x, y):
