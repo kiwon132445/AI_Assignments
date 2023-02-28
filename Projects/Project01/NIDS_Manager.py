@@ -4,40 +4,23 @@ from classifier import *
 import pandas as pd
 import sklearn
 import pickle
-<<<<<<< HEAD
 import os.path
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
-
-<<<<<<< HEAD
-# from sklearn.linear_model import LinearRegression
-
-# from sklearn.datasets import make_classification
-# from sklearn.neural_network import MLPClassifier
-
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
 class NIDS_Manager:
     goal_columns = ['attack_cat', 'Label']
     
     #Initialization method
-<<<<<<< HEAD
     def __init__(self, csv_name, c_method, task, model_name="", feature_name="LCV"):
-=======
-    def __init__(self, csv_name, c_method, task, model_name="", feature_name="RFECV"):
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
         self.csv_name = csv_name
         self.c_method = c_method
         self.task = task
         self.model_name = model_name
         self.feature_name = feature_name
         
-<<<<<<< HEAD
         if self.classifier_init() == -1:
             return -1
         if self.feature_analysis_init(feature_name):
@@ -46,13 +29,6 @@ class NIDS_Manager:
         self.setup()
         self.feature_selector()
         self.command_line_runner()
-=======
-        self.command_line_runner()
-        self.setup()
-        if self.classifier_init() == -1:
-            return -1
-        self.feature_analysis_init(feature_name)
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     #return the csv content
     def get_csv(self):
@@ -81,7 +57,6 @@ class NIDS_Manager:
         self.nids["dsport"] = pd.to_numeric(self.nids["dsport"], errors="coerce")
 
         #converting str to int
-<<<<<<< HEAD
         if self.feature_name == "LCV":
             if self.task == "attack_cat":
                 self.y_unique_names = self.nids['attack_cat'].unique()
@@ -89,9 +64,6 @@ class NIDS_Manager:
                 self.y_unique_names = self.nids['Label'].unique().astype('str')
             self.nids['attack_cat'] = pd.factorize(self.nids['attack_cat'])[0]
         
-=======
-        #self.nids['attack_cat'] = pd.factorize(self.nids['attack_cat'])[0]
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
         self.nids['proto'] = pd.factorize(self.nids['proto'])[0]
         self.nids['state'] = pd.factorize(self.nids['state'])[0]
         self.nids['service'] = pd.factorize(self.nids['service'])[0]
@@ -115,7 +87,6 @@ class NIDS_Manager:
     
     #split data into training and testing sets
     def train_test_split(self):
-<<<<<<< HEAD
         self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3)
     
     #----------------------------------------------#
@@ -130,39 +101,12 @@ class NIDS_Manager:
         else:
             print("No such file exists, starting new model")
             return -1
-=======
-        self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3, random_state=1)
-    
-    #----------------------------------------------#
-    def save_model(self, model):
-        filename = "./Save/" + self.c_method + "_" + task
-        pickle.dump(model, open(filename, 'wb'))
-    
-    def load_model(self):
-        filename = "./Save/" + self.c_method + "_" + task
-        return pickle.load(filename)
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     ##########################################################################################
     #
     # Command line runner
     def command_line_runner(self):
-<<<<<<< HEAD
         task = self.task_checker()
-        
-#         if self.feature_name != "":
-#             if task == 1:
-#                 if self.feature_name == 'RFECV':
-#                     self.run_rfecv(self.x, self.y_attack_cat)
-#                 elif self.feature_name == 'LCV':
-#                     self.run_LassoCV(self.x, self.y_attack_cat)
-#             elif task == 2:
-#                 if self.feature_name == 'RFECV':
-#                     self.run_rfecv(self.x, self.y_label)
-#                 elif self.feature_name == 'LCV':
-#                     self.run_LassoCV(self.x, self.y_label)
-#             else:
-#                 return -1
     
         if self.c_method == 'LRCV':
             self.LRCV_runner(task)
@@ -176,16 +120,6 @@ class NIDS_Manager:
             self.ADA_runner(task)
         elif self.c_method == 'KN':
             self.KN_runner(task)
-=======
-        if self.c_method == 'LRCV':
-            self.LRCV_runner()
-        elif self.c_method == 'SVC':
-            self.SVC_runner()
-        elif self.c_method == 'GNB':
-            self.GNB_runner()
-        elif self.c_method == 'DTC':
-            self.DTC_runner()
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     def task_checker(self):
         if self.task == 'attack_cat':
@@ -197,9 +131,7 @@ class NIDS_Manager:
             options:\n\
             \t - attack_cat\n\
             \t - label')
-            
             return -1
-<<<<<<< HEAD
     
     def feature_selector(self):
         task = self.task_checker()
@@ -318,48 +250,6 @@ class NIDS_Manager:
         else:
             pred = self.run_kn(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
             self.print_class_report(pred, self.y_test_label)
-=======
-    #----------------------------------------------#
-    def LRCV_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return -1
-    
-    def SVC_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return -1
-    
-    def GNB_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return -1
-    
-    def DTC_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return -1
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     ##########################################################################################
     #feature analysis initializer
@@ -367,7 +257,6 @@ class NIDS_Manager:
         self.fa = FeatureAnalysis()
         if fa_type == 'RFECV':
             self.fa.rfecv_init()
-<<<<<<< HEAD
         elif fa_type == 'PCA':
             self.fa.pca_init()
         elif fa_type == 'LCV':
@@ -377,24 +266,16 @@ class NIDS_Manager:
         else:
             return -1
         return 0
-=======
-        if fa_type == 'PCA':
-            self.fa.pca_init()
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     #----------------------------------------------#
     #
     #
-<<<<<<< HEAD
     # Recursive Feature Elimination CV (RFECV) with Decision Tree Classification
     def run_rfecv(self, x, y):
         self.rfecv_fit(x, y)
         self.x_train = self.rfecv_x(self.x_train)
         self.x_test = self.rfecv_x(self.x_test)
-    
-=======
-    #Recursive Feature Elimination CV (RFECV) with Logistic Regression
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
+        
     def rfecv_fit(self, x, y):
         self.fa.rfecv_fit(x, y)
     
@@ -417,13 +298,10 @@ class NIDS_Manager:
     #
     #
     #Principal Component Analysis
-<<<<<<< HEAD
     def run_pca(self, x):
         ft = self.pca_fit_transform(x)
         return self.pca_x(ft)
         
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     def pca_fit_transform(self, x):
         return self.fa.pca_fit_transform(x)
     
@@ -443,7 +321,6 @@ class NIDS_Manager:
         plt.ylabel('Explained variance')
         plt.title('Feature Explained Variance')
         plt.show()
-<<<<<<< HEAD
     #----------------------------------------------#
     #
     # Linear Regression (LassoCV)
@@ -459,8 +336,6 @@ class NIDS_Manager:
     
     def LassoCV_important(self, x, y):
         return self.fa.LassoCV_important(x, y)
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     ##########################################################################################
     #Classifier initializer
@@ -475,13 +350,10 @@ class NIDS_Manager:
                 self.classifier.gauss_init()
             elif self.c_method == 'DTC':
                 self.classifier.dtc_init()
-<<<<<<< HEAD
             elif self.c_method == 'ADA':
                 self.classifier.ada_init()
             elif self.c_method == 'KN':
                 self.classifier.kn_init()
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
             else:
                 print('No such Classification method exists in code\n\
                 ---------------------\n\
@@ -490,11 +362,8 @@ class NIDS_Manager:
                     \t - SVC  = Support Vector Classification\n\
                     \t - GNB  = Gaussian Naive Bayes\n\
                     \t - DTC  = Decision Tree Classifier\n\
-<<<<<<< HEAD
                     \t - ADA  = Ada Boost Classifier\n\
                     \t - KN   = KNeighborsClassifier\n\
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
                 ---------------------')
                 return -1
         else:
@@ -506,13 +375,10 @@ class NIDS_Manager:
                 self.classifier.gauss_init()
             elif c_type == 'DTC':
                 self.classifier.dtc_init()
-<<<<<<< HEAD
             elif c_type == 'ADA':
                 self.classifier.ada_init()
             elif c_type == 'KN':
                 self.classifier.kn_init()
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
             else:
                 print('No such Classification method exists in code\n\
                 ---------------------\n\
@@ -521,11 +387,8 @@ class NIDS_Manager:
                     \t - SVC  = Support Vector Classification\n\
                     \t - GNB  = Gaussian Naive Bayes\n\
                     \t - DTC  = Decision Tree Classifier\n\
-<<<<<<< HEAD
                     \t - ADA  = Ada Boost Classifier\n\
                     \t - KN   = KNeighborsClassifier\n\
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
                 ---------------------')
                 return -1
         return 0
@@ -534,24 +397,11 @@ class NIDS_Manager:
         print('Model accuracy score:  {0:0.4f}'. format(accuracy_score(y_test, pred)))
         
     def print_class_report(self, y_test, pred):
-<<<<<<< HEAD
         print('Classification Report\n')
         if self.feature_name == "LCV":
             print(classification_report(y_test, pred, target_names=self.y_unique_names))
         else:
             print(classification_report(y_test, pred))
-=======
-        if c_type == 'LRCV':
-            print('Classifier: Logistic Regression Cross-Validation (LRCV) \n')
-        elif c_type == 'SVC':
-            print('Classifier: Support Vector Classification (SVC) \n')
-        elif c_type == 'GNB':
-            print('Gaussian Naive Bayes (GNB) \n')
-        elif c_type == 'DTC':
-            print('Decision Tree Classifier (DTC) \n')
-        
-        print(classification_report(y_test, pred))
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     #----------------------------------------------#
     #
@@ -561,11 +411,8 @@ class NIDS_Manager:
         self.logistic_fit(x_train, y_train)
         pred = self.logistic_pred(x_test)
         score = self.logistic_score(x_test, y_test)
-<<<<<<< HEAD
         
         self.save_model(self.classifier.log_reg)
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
         return pred, score
     
     def logistic_fit(self, x_train, y_train):
@@ -582,11 +429,8 @@ class NIDS_Manager:
         self.svc_fit(x_train, y_train)
         pred = self.svc_pred(x_test)
         score = self.svc_score(x_test, y_test)
-<<<<<<< HEAD
         
         self.save_model(self.classifier.svc)
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
         return pred, score
     
     def svc_fit(self, x_train, y_train):
@@ -600,7 +444,6 @@ class NIDS_Manager:
     #
     #
     # Gaussian Naive Bayes (GaussianNB)
-<<<<<<< HEAD
     def run_gauss(self, x_train, x_test, y_train, y_test):
         self.gauss_fit(x_train, y_train)
         pred = self.gauss_pred(x_test)
@@ -608,13 +451,10 @@ class NIDS_Manager:
         self.save_model(self.classifier.gauss)
         return pred
     
-=======
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     def gauss_fit(self, x, y):
         self.classifier.gauss_fit(x, y)
     
     def gauss_pred(self, x):
-<<<<<<< HEAD
         return self.classifier.gauss_pred(x)
     #
     #
@@ -626,17 +466,10 @@ class NIDS_Manager:
         self.save_model(self.classifier.dtc)
         return pred
     
-=======
-        self.classifier.gauss_pred(x)
-    #
-    #
-    # Decision Tree Classifier
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     def dtc_fit(self, x, y):
         self.classifier.dtc_fit(x, y)
     
     def dtc_pred(self, x):
-<<<<<<< HEAD
         return self.classifier.dtc_pred(x)
     
     #----------------------------------------------#
@@ -670,6 +503,3 @@ class NIDS_Manager:
         
     def kn_pred(self, x):
         return self.classifier.kn_pred(x)
-=======
-        return self.classifier.dtc_pred(x)
->>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
