@@ -62,7 +62,11 @@ class Classifier:
         self.gauss.fit(x, y)
     
     def gauss_pred(self, x):
+<<<<<<< HEAD
         return self.gauss.predict(x)
+=======
+        self.gauss.pred(x)
+>>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
     
     #
     # P2
@@ -74,6 +78,7 @@ class Classifier:
         self.dtc.fit(x, y)
     
     def dtc_pred(self, x):
+<<<<<<< HEAD
         return self.dtc.predict(x)
     
     ###########################################################################################################
@@ -101,3 +106,6 @@ class Classifier:
     
     def kn_pred(self, x):
         return self.kn.predict(x)
+=======
+        return self.dtc.pred(x)
+>>>>>>> 751976cc28ba63cf5038f94dff151dbcb5709713
