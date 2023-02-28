@@ -80,6 +80,15 @@ class NIDS_Manager:
     def train_test_split(self):
         self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3, random_state=1)
     
+    #----------------------------------------------#
+    def save_model(self, model):
+        filename = "./Save/" + self.c_method + "_" + task
+        pickle.dump(model, open(filename, 'wb'))
+    
+    def load_model(self):
+        filename = "./Save/" + self.c_method + "_" + task
+        return pickle.load(filename)
+    
     ##########################################################################################
     #
     # Command line runner
@@ -114,7 +123,7 @@ class NIDS_Manager:
         # label
         elif task == 2:
             return 2
-        return 0
+        return -1
     
     def SVC_runner(self):
         task = self.task_checker()
@@ -124,7 +133,7 @@ class NIDS_Manager:
         # label
         elif task == 2:
             return 2
-        return 0
+        return -1
     
     def GNB_runner(self):
         task = self.task_checker()
@@ -134,8 +143,7 @@ class NIDS_Manager:
         # label
         elif task == 2:
             return 2
-        
-        return 0
+        return -1
     
     def DTC_runner(self):
         task = self.task_checker()
@@ -145,8 +153,7 @@ class NIDS_Manager:
         # label
         elif task == 2:
             return 2
-        
-        return 0
+        return -1
     
     ##########################################################################################
     #feature analysis initializer
@@ -156,6 +163,7 @@ class NIDS_Manager:
             self.fa.rfecv_init()
         if fa_type == 'PCA':
             self.fa.pca_init()
+    
     #----------------------------------------------#
     #
     #
@@ -179,6 +187,7 @@ class NIDS_Manager:
         self.fa.rfecv_select_plot()
     
     #----------------------------------------------#
+    #
     #
     #Principal Component Analysis
     def pca_fit_transform(self, x):
@@ -249,7 +258,15 @@ class NIDS_Manager:
         print('Model accuracy score:  {0:0.4f}'. format(accuracy_score(y_test, pred)))
         
     def print_class_report(self, y_test, pred):
-        print('Classifier: Principal Component Analysis (PCA) \n')
+        if c_type == 'LRCV':
+            print('Classifier: Logistic Regression Cross-Validation (LRCV) \n')
+        elif c_type == 'SVC':
+            print('Classifier: Support Vector Classification (SVC) \n')
+        elif c_type == 'GNB':
+            print('Gaussian Naive Bayes (GNB) \n')
+        elif c_type == 'DTC':
+            print('Decision Tree Classifier (DTC) \n')
+        
         print(classification_report(y_test, pred))
     
     #----------------------------------------------#

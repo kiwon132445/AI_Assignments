@@ -17,7 +17,7 @@ class FeatureAnalysis:
     #Recursive Feature Elimination CV (RFECV)
     def rfecv_init(self, minimum_features=1, step=5):
         self.step = step
-        self.rfecv = make_pipeline(StandardScaler(), RFECV(estimator=DecisionTreeClassifier(), step=step, cv=5, min_features_to_select=minimum_features))
+        self.rfecv = make_pipeline(StandardScaler(), RFECV(estimator=DecisionTreeClassifier(), step=step, cv=3, min_features_to_select=minimum_features))
         
     def rfecv_fit(self, x, y):
         self.rfecv.fit(x, y)
@@ -29,7 +29,7 @@ class FeatureAnalysis:
         return self.rfecv[1].support_
     
     def rfecv_score(self, x, y):
-        return self.rfecv[1].score(Standarx, y)
+        return self.rfecv[1].score(StandardScaler().fit_transform(x), y)
     
     def rfecv_select_plot(self):
         plt.figure()
