@@ -19,6 +19,7 @@ class NIDS_Manager:
         self.c_method = c_method
         self.task = task
         self.model_name = model_name
+        self.feature_name = feature_name
         
         self.command_line_runner()
         self.setup()
@@ -35,6 +36,7 @@ class NIDS_Manager:
         self.load_csv()
         self.convert_csv()
         self.x_and_y_split()
+        self.train_test_split()
         
     #load csv
     def load_csv(self):
@@ -82,11 +84,6 @@ class NIDS_Manager:
     #
     # Command line runner
     def command_line_runner(self):
-        self.csv_name = csv_name
-        self.c_method = c_method
-        self.task = task
-        self.model_name = model_name
-        
         if self.c_method == 'LRCV':
             self.LRCV_runner()
         elif self.c_method == 'SVC':
@@ -110,13 +107,45 @@ class NIDS_Manager:
             return -1
     #----------------------------------------------#
     def LRCV_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        return 0
+    
+    def SVC_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        return 0
+    
+    def GNB_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
         
         return 0
-    def SVC_runner(self):
-        return 0
-    def GNB_runner(self):
-        return 0
+    
     def DTC_runner(self):
+        task = self.task_checker()
+        # attack_cat
+        if task == 1:
+            return 1
+        # label
+        elif task == 2:
+            return 2
+        
         return 0
     
     ##########################################################################################
@@ -135,13 +164,19 @@ class NIDS_Manager:
         self.fa.rfecv_fit(x, y)
     
     def rfecv_x(self, x):
-        return x[self.rfecv_selected_features(x)]
+        return x[self.rfecv_selected_features()]
     
-    def rfecv_select_plot(self):
+    def rfecv_x_specific_select(self, x, sf):
+        return x[sf]
+    
+    def rfecv_selected_features(self):
+        return self.x.columns[self.fa.rfecv_support_()]
+    
+    def rfecv_score(self, x, y):
+        return self.fa.rfecv_score(x, y)
+    
+    def rfecv_plot(self):
         self.fa.rfecv_select_plot()
-        
-    def rfecv_selected_features(self, x):
-        return x.columns[self.fa.rfecv_support_()]
     
     #----------------------------------------------#
     #

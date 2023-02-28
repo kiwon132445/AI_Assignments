@@ -1,3 +1,7 @@
+#pip install sklearn
+#pip install scikit-learn
+#pip install pandas
+
 import sys
 import warnings
 warnings.filterwarnings("ignore")
