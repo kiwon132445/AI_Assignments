@@ -1,6 +1,8 @@
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.decomposition import PCA
 
+from sklearn.linear_model import LassoCV
+from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.tree import DecisionTreeClassifier
 
@@ -14,10 +16,11 @@ class FeatureAnalysis:
     ###########################################################################################################
     # Kiwon's part
     #
-    #Recursive Feature Elimination CV (RFECV)
-    def rfecv_init(self, minimum_features=1, step=5):
+    # Recursive Feature Elimination CV (RFECV)
+    def rfecv_init(self, minimum_features=15, step=3, cv=5):
         self.step = step
-        self.rfecv = make_pipeline(StandardScaler(), RFECV(estimator=DecisionTreeClassifier(), step=step, cv=5, min_features_to_select=minimum_features))
+        self.cv = cv
+        self.rfecv = make_pipeline(StandardScaler(), RFECV(estimator=DecisionTreeClassifier(), min_features_to_select=minimum_features, step=step, cv=cv))
         
     def rfecv_fit(self, x, y):
         self.rfecv.fit(x, y)
@@ -29,7 +32,7 @@ class FeatureAnalysis:
         return self.rfecv[1].support_
     
     def rfecv_score(self, x, y):
-        return self.rfecv[1].score(Standarx, y)
+        return self.rfecv[1].score(StandardScaler().fit_transform(x), y)
     
     def rfecv_select_plot(self):
         plt.figure()
@@ -41,7 +44,7 @@ class FeatureAnalysis:
     ###########################################################################################################
     # June's part
     #
-    #Principal Component Analysis
+    # Principal Component Analysis (PCA)
     def pca_init(self, n_components=5):
         self.pca = make_pipeline(StandardScaler(), PCA(n_components=n_components))
         
@@ -52,3 +55,16 @@ class FeatureAnalysis:
     def pca_fit_df(self):
         return pd.DataFrame(data=self.pca_ft, columns=self.pca.get_feature_names_out())
     
+    ###########################################################################################################
+    # John's part
+    #
+    # Linear Regression (LassoCV)
+    def LassoCV_init(self):
+        self.LassoCV = LassoCV(cv=KFold(n_splits=5, shuffle=True), max_iter=1000, alphas=[0.01, 0.05, 0.1, 0.5, 1.0, 5.0])
+    
+    def LassoCV_fit(self, x, y):
+        self.LassoCV.fit(x, y)
+    
+    def LassoCV_important(self, x, y):
+        self.LassoCV_important = [feature for feature, coef in zip(x.columns, self.LassoCV.coef_) if abs(coef) > 0.0001]
+        return self.LassoCV_important

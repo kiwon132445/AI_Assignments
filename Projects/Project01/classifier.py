@@ -1,11 +1,14 @@
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.svm import SVC, LinearSVC
-
 from sklearn.pipeline import make_pipeline
+
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
+
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.svm import SVC, LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 class Classifier:
     
@@ -15,7 +18,7 @@ class Classifier:
     # P1
     # Logistic Regression CV
     def logistic_init(self):
-        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV())
+        self.log_reg = make_pipeline(StandardScaler(), LogisticRegressionCV(cv=3))
         
     def logistic_fit(self, x, y):
         self.log_reg.fit(x, y)
@@ -33,7 +36,6 @@ class Classifier:
     # P2
     #Linear Support Vector Classification (LinearSVC)
     def svc_init(self):
-        #self.svc = make_pipeline(StandardScaler(), SVC())
         self.svc = make_pipeline(StandardScaler(), LinearSVC())
     
     def svc_fit(self, x, y):
@@ -60,7 +62,7 @@ class Classifier:
         self.gauss.fit(x, y)
     
     def gauss_pred(self, x):
-        self.gauss.pred(x)
+        return self.gauss.predict(x)
     
     #
     # P2
@@ -72,4 +74,30 @@ class Classifier:
         self.dtc.fit(x, y)
     
     def dtc_pred(self, x):
-        return self.dtc.pred(x)
+        return self.dtc.predict(x)
+    
+    ###########################################################################################################
+    # John's section
+    #
+    # P1
+    # AdaBoost classification
+    def ada_init(self):
+        self.ada = AdaBoostClassifier(n_estimators=100, random_state=0)
+    
+    def ada_fit(self, x, y):
+        self.ada.fit(x, y)
+        
+    def ada_pred(self, x):
+        return self.ada.predict(x)
+    #
+    #
+    # P2
+    # K Neighbors Classifier
+    def kn_init(self):
+        self.kn = KNeighborsClassifier(n_neighbors=5)
+    
+    def kn_fit(self, x, y):
+        self.kn.fit(x, y)
+    
+    def kn_pred(self, x):
+        return self.kn.predict(x)

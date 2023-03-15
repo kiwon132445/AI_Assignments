@@ -4,28 +4,31 @@ from classifier import *
 import pandas as pd
 import sklearn
 import pickle
+import os.path
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
-
 class NIDS_Manager:
     goal_columns = ['attack_cat', 'Label']
     
     #Initialization method
-    def __init__(self, csv_name, c_method, task, model_name="", feature_name="RFECV"):
+    def __init__(self, csv_name, c_method, task, model_name="", feature_name="LCV"):
         self.csv_name = csv_name
         self.c_method = c_method
         self.task = task
         self.model_name = model_name
         self.feature_name = feature_name
         
-        self.command_line_runner()
-        self.setup()
         if self.classifier_init() == -1:
             return -1
-        self.feature_analysis_init(feature_name)
+        if self.feature_analysis_init(feature_name):
+            return -1
+        
+        self.setup()
+        self.feature_selector()
+        self.command_line_runner()
     
     #return the csv content
     def get_csv(self):
@@ -54,7 +57,13 @@ class NIDS_Manager:
         self.nids["dsport"] = pd.to_numeric(self.nids["dsport"], errors="coerce")
 
         #converting str to int
-        #self.nids['attack_cat'] = pd.factorize(self.nids['attack_cat'])[0]
+        if self.feature_name == "LCV":
+            if self.task == "attack_cat":
+                self.y_unique_names = self.nids['attack_cat'].unique()
+            else:
+                self.y_unique_names = self.nids['Label'].unique().astype('str')
+            self.nids['attack_cat'] = pd.factorize(self.nids['attack_cat'])[0]
+        
         self.nids['proto'] = pd.factorize(self.nids['proto'])[0]
         self.nids['state'] = pd.factorize(self.nids['state'])[0]
         self.nids['service'] = pd.factorize(self.nids['service'])[0]
@@ -78,20 +87,44 @@ class NIDS_Manager:
     
     #split data into training and testing sets
     def train_test_split(self):
-        self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3, random_state=1)
+        self.x_train, self.x_test, self.y_train_attack, self.y_test_attack, self.y_train_label, self.y_test_label = train_test_split(self.x, self.y_attack_cat, self.y_label, test_size=0.3)
     
+    #----------------------------------------------#
+    def save_model(self, model):
+        filename = "./Save/" + self.c_method + "_" + self.task + ".sav"
+        pickle.dump(model, open(filename, 'wb'))
+    
+    #for custom saves such as feature selector
+    def save_feature_model(self, model, path):
+        print("Feature Selection Complete")
+        filename = path
+        pickle.dump(model, open(filename, 'wb'))
+        print("Feature Selector saved")
+    
+    def load_model(self, path):
+        filename = path
+        if os.path.isfile(filename):
+            return pickle.load(open(filename, 'rb'))
+        else:
+            print("(" + path + ")" + "No such file exists, starting new model")
     ##########################################################################################
     #
     # Command line runner
     def command_line_runner(self):
+        task = self.task_checker()
+    
         if self.c_method == 'LRCV':
-            self.LRCV_runner()
+            self.LRCV_runner(task)
         elif self.c_method == 'SVC':
-            self.SVC_runner()
+            self.SVC_runner(task)
         elif self.c_method == 'GNB':
-            self.GNB_runner()
+            self.GNB_runner(task)
         elif self.c_method == 'DTC':
-            self.DTC_runner()
+            self.DTC_runner(task)
+        elif self.c_method == 'ADA':
+            self.ADA_runner(task)
+        elif self.c_method == 'KN':
+            self.KN_runner(task)
     
     def task_checker(self):
         if self.task == 'attack_cat':
@@ -103,50 +136,125 @@ class NIDS_Manager:
             options:\n\
             \t - attack_cat\n\
             \t - label')
-            
             return -1
+    
+    def feature_selector(self):
+        task = self.task_checker()
+        if self.feature_name != "":
+            if task == 1:
+                if self.feature_name == 'RFECV':
+                    self.run_rfecv(self.x, self.y_attack_cat)
+                elif self.feature_name == 'LCV':
+                    self.run_LassoCV(self.x, self.y_attack_cat)
+            elif task == 2:
+                if self.feature_name == 'RFECV':
+                    self.run_rfecv(self.x, self.y_label)
+                elif self.feature_name == 'LCV':
+                    self.run_LassoCV(self.x, self.y_label)
+            else:
+                return -1
     #----------------------------------------------#
-    def LRCV_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return 0
-    
-    def SVC_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
-        return 0
-    
-    def GNB_runner(self):
-        task = self.task_checker()
-        # attack_cat
-        if task == 1:
-            return 1
-        # label
-        elif task == 2:
-            return 2
+    def LRCV_runner(self, task):
+        print("Logistic Regression CV Running...")
         
-        return 0
-    
-    def DTC_runner(self):
-        task = self.task_checker()
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.log_reg = model
+            
         # attack_cat
         if task == 1:
-            return 1
+            pred, score = self.run_logistic(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
         # label
-        elif task == 2:
-            return 2
+        else:
+            pred, score = self.run_logistic(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
+    
+    def SVC_runner(self, task):
+        print("Linear Support Vector Classification Running...")
         
-        return 0
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.svc = model
+        
+        # attack_cat
+        if task == 1:
+            pred, score = self.run_svc(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
+        # label
+        else:
+            pred, score = self.run_svc(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
+    
+    def GNB_runner(self, task):
+        print("Gaussian Naive Bayes Running...")
+        
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.log_reg = model
+        
+        # attack_cat
+        if task == 1:
+            pred = self.run_gauss(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
+        # label
+        else:
+            pred = self.run_gauss(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
+    
+    def DTC_runner(self, task):
+        print("Decision Tree Classifier Running...")
+        
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.dtc = model
+        
+        # attack_cat
+        if task == 1:
+            pred = self.run_dtc(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
+        # label
+        else:
+            pred = self.run_dtc(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
+            
+    def ADA_runner(self, task):
+        print("AdaBoost Classification Running...")
+        
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.ada = model
+        
+        # attack_cat
+        if task == 1:
+            pred = self.run_ada(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
+        # label
+        else:
+            pred = self.run_ada(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
+    
+    def KN_runner(self, task):
+        print("K Neighbors Classifier Running...")
+        
+        if self.model_name != "":
+            model = self.load_model(self.model_name)
+            if model is not None:
+                self.classifier.ada = model
+        
+        # attack_cat
+        if task == 1:
+            pred = self.run_kn(self.x_train, self.x_test, self.y_train_attack, self.y_test_attack)
+            self.print_class_report(pred, self.y_test_attack)
+        # label
+        else:
+            pred = self.run_kn(self.x_train, self.x_test, self.y_train_label, self.y_test_label)
+            self.print_class_report(pred, self.y_test_label)
     
     ##########################################################################################
     #feature analysis initializer
@@ -154,12 +262,30 @@ class NIDS_Manager:
         self.fa = FeatureAnalysis()
         if fa_type == 'RFECV':
             self.fa.rfecv_init()
-        if fa_type == 'PCA':
+        elif fa_type == 'PCA':
             self.fa.pca_init()
+        elif fa_type == 'LCV':
+            fa_model = self.load_model("./Save/FeatureSelector/LassoCV.sav")
+            if fa_model is not None:
+                self.fa.LassoCV = fa_model
+                print("Feature Selector loaded")
+                return 0
+            self.fa.LassoCV_init()
+        elif fa_type == '':
+            return 0
+        else:
+            return -1
+        return 0
+    
     #----------------------------------------------#
     #
     #
-    #Recursive Feature Elimination CV (RFECV) with Logistic Regression
+    # Recursive Feature Elimination CV (RFECV) with Decision Tree Classification
+    def run_rfecv(self, x, y):
+        self.rfecv_fit(x, y)
+        self.x_train = self.rfecv_x(self.x_train)
+        self.x_test = self.rfecv_x(self.x_test)
+    
     def rfecv_fit(self, x, y):
         self.fa.rfecv_fit(x, y)
     
@@ -180,7 +306,12 @@ class NIDS_Manager:
     
     #----------------------------------------------#
     #
+    #
     #Principal Component Analysis
+    def run_pca(self, x):
+        ft = self.pca_fit_transform(x)
+        return self.pca_x(ft)
+        
     def pca_fit_transform(self, x):
         return self.fa.pca_fit_transform(x)
     
@@ -200,6 +331,21 @@ class NIDS_Manager:
         plt.ylabel('Explained variance')
         plt.title('Feature Explained Variance')
         plt.show()
+    #----------------------------------------------#
+    #
+    # Linear Regression (LassoCV)
+    def run_LassoCV(self, x, y):
+        self.LassoCV_fit(x, y)
+        important = self.LassoCV_important(x, y)
+        self.x_train = self.x_train[important]
+        self.x_test = self.x_test[important]
+        self.save_feature_model(self.fa.LassoCV, "./Save/FeatureSelector/LassoCV.sav")
+        
+    def LassoCV_fit(self, x, y):
+        self.fa.LassoCV_fit(x, y);
+    
+    def LassoCV_important(self, x, y):
+        return self.fa.LassoCV_important(x, y)
     
     ##########################################################################################
     #Classifier initializer
@@ -214,6 +360,10 @@ class NIDS_Manager:
                 self.classifier.gauss_init()
             elif self.c_method == 'DTC':
                 self.classifier.dtc_init()
+            elif self.c_method == 'ADA':
+                self.classifier.ada_init()
+            elif self.c_method == 'KN':
+                self.classifier.kn_init()
             else:
                 print('No such Classification method exists in code\n\
                 ---------------------\n\
@@ -222,6 +372,8 @@ class NIDS_Manager:
                     \t - SVC  = Support Vector Classification\n\
                     \t - GNB  = Gaussian Naive Bayes\n\
                     \t - DTC  = Decision Tree Classifier\n\
+                    \t - ADA  = Ada Boost Classifier\n\
+                    \t - KN   = KNeighborsClassifier\n\
                 ---------------------')
                 return -1
         else:
@@ -233,6 +385,10 @@ class NIDS_Manager:
                 self.classifier.gauss_init()
             elif c_type == 'DTC':
                 self.classifier.dtc_init()
+            elif c_type == 'ADA':
+                self.classifier.ada_init()
+            elif c_type == 'KN':
+                self.classifier.kn_init()
             else:
                 print('No such Classification method exists in code\n\
                 ---------------------\n\
@@ -241,6 +397,8 @@ class NIDS_Manager:
                     \t - SVC  = Support Vector Classification\n\
                     \t - GNB  = Gaussian Naive Bayes\n\
                     \t - DTC  = Decision Tree Classifier\n\
+                    \t - ADA  = Ada Boost Classifier\n\
+                    \t - KN   = KNeighborsClassifier\n\
                 ---------------------')
                 return -1
         return 0
@@ -249,8 +407,11 @@ class NIDS_Manager:
         print('Model accuracy score:  {0:0.4f}'. format(accuracy_score(y_test, pred)))
         
     def print_class_report(self, y_test, pred):
-        print('Classifier: Principal Component Analysis (PCA) \n')
-        print(classification_report(y_test, pred))
+        print('Classification Report\n')
+        if self.feature_name == "LCV":
+            print(classification_report(y_test, pred, target_names=self.y_unique_names))
+        else:
+            print(classification_report(y_test, pred))
     
     #----------------------------------------------#
     #
@@ -260,6 +421,8 @@ class NIDS_Manager:
         self.logistic_fit(x_train, y_train)
         pred = self.logistic_pred(x_test)
         score = self.logistic_score(x_test, y_test)
+        
+        self.save_model(self.classifier.log_reg)
         return pred, score
     
     def logistic_fit(self, x_train, y_train):
@@ -276,6 +439,8 @@ class NIDS_Manager:
         self.svc_fit(x_train, y_train)
         pred = self.svc_pred(x_test)
         score = self.svc_score(x_test, y_test)
+        
+        self.save_model(self.classifier.svc)
         return pred, score
     
     def svc_fit(self, x_train, y_train):
@@ -289,16 +454,62 @@ class NIDS_Manager:
     #
     #
     # Gaussian Naive Bayes (GaussianNB)
+    def run_gauss(self, x_train, x_test, y_train, y_test):
+        self.gauss_fit(x_train, y_train)
+        pred = self.gauss_pred(x_test)
+        
+        self.save_model(self.classifier.gauss)
+        return pred
+    
     def gauss_fit(self, x, y):
         self.classifier.gauss_fit(x, y)
     
     def gauss_pred(self, x):
-        self.classifier.gauss_pred(x)
+        return self.classifier.gauss_pred(x)
     #
     #
     # Decision Tree Classifier
+    def run_dtc(self, x_train, x_test, y_train, y_test):
+        self.dtc_fit(x_train, y_train)
+        pred = self.dtc_pred(x_test)
+        
+        self.save_model(self.classifier.dtc)
+        return pred
+    
     def dtc_fit(self, x, y):
         self.classifier.dtc_fit(x, y)
     
     def dtc_pred(self, x):
         return self.classifier.dtc_pred(x)
+    
+    #----------------------------------------------#
+    #
+    #
+    # AdaBoost classification
+    def run_ada(self, x_train, x_test, y_train, y_test):
+        self.ada_fit(x_train, y_train)
+        pred = self.ada_pred(x_test)
+        
+        self.save_model(self.classifier.ada)
+        return pred
+    
+    def ada_fit(self, x, y):
+        self.classifier.ada_fit(x, y)
+        
+    def ada_pred(self, x):
+        return self.classifier.ada_pred(x)
+    #
+    #
+    # K Neighbors Classifier
+    def run_kn(self, x_train, x_test, y_train, y_test):
+        self.kn_fit(x_train, y_train)
+        pred = self.kn_pred(x_test)
+        
+        self.save_model(self.classifier.kn)
+        return pred
+    
+    def kn_fit(self, x, y):
+        self.classifier.kn_fit(x, y)
+        
+    def kn_pred(self, x):
+        return self.classifier.kn_pred(x)
