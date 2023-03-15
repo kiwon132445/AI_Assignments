@@ -265,7 +265,7 @@ class NIDS_Manager:
         elif fa_type == 'PCA':
             self.fa.pca_init()
         elif fa_type == 'LCV':
-            fa_model = self.load_model("./Save/LassoCV.sav")
+            fa_model = self.load_model("./Save/FeatureSelector/LassoCV.sav")
             if fa_model is not None:
                 self.fa.LassoCV = fa_model
                 print("Feature Selector loaded")
@@ -339,7 +339,7 @@ class NIDS_Manager:
         important = self.LassoCV_important(x, y)
         self.x_train = self.x_train[important]
         self.x_test = self.x_test[important]
-        self.save_feature_model(self.fa.LassoCV, "./Save/LassoCV.sav")
+        self.save_feature_model(self.fa.LassoCV, "./Save/FeatureSelector/LassoCV.sav")
         
     def LassoCV_fit(self, x, y):
         self.fa.LassoCV_fit(x, y);
