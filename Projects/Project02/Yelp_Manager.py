@@ -18,6 +18,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_extraction.text import CountVectorizer
 
 #Initialization method
 class Yelp_Manager:
@@ -46,15 +48,15 @@ class Yelp_Manager:
         self.nrows = nrows
         
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.nlp = spacy.load("en_core_web_md")
+        self.nlp = spacy.load("en_core_web_lg")
         self.transformer = pipeline("sentiment-analysis", model="roberta-base")
     
     def load_dataset(self):
         self.load_json()
         self.convert_yelp()
+        self.x_y_split();
         
     def process_dataset(self):
-        self.x_y_split();
         self.train_valid_test_split();
     
     def load_json(self):
@@ -77,9 +79,27 @@ class Yelp_Manager:
         self.X_train, X_remaining, self.y_train, y_remaining = train_test_split(self.x, self.y, train_size=0.8) 
         self.X_valid, self.X_test, self.y_valid, self.y_test = train_test_split(X_remaining, y_remaining, test_size=0.5)
         
+    def spacy_vectorize(self, dataset):
+        vectors = []
+        count = 0
+        checkpoint = 10000
+        remaining = len(dataset['text'])
+        for doc in self.nlp.pipe(dataset['text'].tolist(), n_process=10):
+            vectors.append(doc.vector)
+            count += 1
+            remaining -= 1
+            if count == checkpoint:
+                print("Remaining data:", remaining)
+                checkpoint += 10000
+        return vectors
+        
     def word_embedding(self, text):
         doc = self.nlp(text)
         return doc.vector
+    
+    def count_vectorize(self, dataset):
+        vec = CountVectorizer()
+        return vec.fit_transform(dataset['text'])
     
     #############################################################################################
     # Saving code
