@@ -1,9 +1,20 @@
 import pandas as pd
+import numpy as np
 import sklearn
 import pickle
 import os.path
 import json
 import torch
+
+import gensim
+import gensim.corpora as corpora
+from gensim.utils import simple_preprocess
+from gensim.models import CoherenceModel
+
+import spacy
+#from spacy.lemmatizer import Lemmatizer
+from spacy.lang.en.stop_words import STOP_WORDS
+#import en_core_web_lg
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
@@ -12,7 +23,7 @@ from sklearn.model_selection import train_test_split
 class Yelp_Manager:
     #------------------------------------------------------------------------------------#
     # Initialized Variables
-    input_columns = ['review_id', 'user_id', 'business_id', 'text', 'date']
+    input_columns = ['text']
     irrelevant_columns = ['review_id', 'user_id', 'business_id', 'date']
     output_columns = ['stars', 'useful', 'funny', 'cool']
     
@@ -29,9 +40,10 @@ class Yelp_Manager:
     #------------------------------------------------------------------------------------#
     
     
-    def __init__(self, file_name, model_name=""):
+    def __init__(self, file_name, model_name="", nrows=0):
         self.file_name = file_name
         self.model_name = model_name
+        self.nrows = nrows
     
     def program_runner(self):
         self.load_json()
@@ -40,30 +52,24 @@ class Yelp_Manager:
         self.train_valid_test_split();
     
     def load_json(self):
-        chunks = pd.read_json('./yelp_dataset/yelp_academic_dataset_review.json', lines=True, chunksize = 10000)
-        self.yelp = pd.DataFrame()
-        for chunk in chunks:
-          self.yelp = pd.concat([self.yelp, chunk])
+        if self.nrows == 0:
+            self.yelp = pd.read_json('./yelp_dataset/yelp_academic_dataset_review.json', lines=True)
+        else:
+            self.yelp = pd.read_json('./yelp_dataset/yelp_academic_dataset_review.json', lines=True, nrows=self.nrows)
         
     def convert_yelp(self):
         #columns
         #review_id user_id business_id stars useful funny cool text date
-        
-#         self.yelp['review_id'] = self.yelp['review_id'].astype('str')
-#         self.yelp['user_id'] = self.yelp['user_id'].astype('str')
-#         self.yelp['business_id'] = self.yelp['business_id'].astype('str')
         self.yelp['text'] = self.yelp['text'].astype('str')
-        self.yelp.dropna
+        self.yelp = self.yelp.drop(columns=self.irrelevant_columns)
     
     def x_y_split(self):
         self.x = self.yelp.drop(columns=self.output_columns)
         self.y = self.yelp.drop(columns=self.input_columns)
-        self.y = self.y.drop(columns=self.irrelevant_columns)
         
     def train_valid_test_split(self):
         self.X_train, X_remaining, self.y_train, y_remaining = train_test_split(self.x, self.y, train_size=0.8) 
-        self.X_valid, self.X_test, self.y_valid, self.y_test = train_test_split(X_remaining, y_remaining, test_size=0.5) 
-    
+        self.X_valid, self.X_test, self.y_valid, self.y_test = train_test_split(X_remaining, y_remaining, test_size=0.5)
     
     #############################################################################################
     # Saving code
