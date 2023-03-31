@@ -7,14 +7,14 @@ import json
 import torch
 
 import gensim
-import gensim.corpora as corpora
-from gensim.utils import simple_preprocess
-from gensim.models import CoherenceModel
+from gensim.models import KeyedVectors
 
 import spacy
-#from spacy.lemmatizer import Lemmatizer
-from spacy.lang.en.stop_words import STOP_WORDS
-#import en_core_web_lg
+from spacy.pipeline.lemmatizer import Lemmatizer
+import en_core_web_lg
+
+from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
@@ -44,10 +44,16 @@ class Yelp_Manager:
         self.file_name = file_name
         self.model_name = model_name
         self.nrows = nrows
+        
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.nlp = spacy.load("en_core_web_md")
+        self.transformer = pipeline("sentiment-analysis", model="roberta-base")
     
-    def program_runner(self):
+    def load_dataset(self):
         self.load_json()
         self.convert_yelp()
+        
+    def process_dataset(self):
         self.x_y_split();
         self.train_valid_test_split();
     
@@ -70,6 +76,10 @@ class Yelp_Manager:
     def train_valid_test_split(self):
         self.X_train, X_remaining, self.y_train, y_remaining = train_test_split(self.x, self.y, train_size=0.8) 
         self.X_valid, self.X_test, self.y_valid, self.y_test = train_test_split(X_remaining, y_remaining, test_size=0.5)
+        
+    def word_embedding(self, text):
+        doc = self.nlp(text)
+        return doc.vector
     
     #############################################################################################
     # Saving code

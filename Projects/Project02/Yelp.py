@@ -1,3 +1,13 @@
+#pip install transformers
+#pip install torch
+#pip install -U pip setuptools wheel
+#pip install spacy
+#pip install gensim
+
+#python -m spacy download en_core_web_sm
+#python -m spacy download en_core_web_md
+#python -m spacy download en_core_web_lg
+
 import sys
 import warnings
 warnings.filterwarnings("ignore")

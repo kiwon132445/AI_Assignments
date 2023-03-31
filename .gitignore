@@ -4,3 +4,4 @@
 __pycache__/
 .sav
 yelp_dataset/
+GoogleNews-vectors-negative300.bin/
