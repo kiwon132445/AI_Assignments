@@ -1,12 +1,16 @@
+#pip install spacy
+#pip install -U spacy[transformers]
+#python -m spacy download en_core_web_lg
+#python -m spacy download en_core_web_trf
+
+#unused so far
+#pip install tweet-preprocessor
 #pip install transformers
 #pip install torch
-#pip install -U pip setuptools wheel
-#pip install spacy
 #pip install gensim
-
+#pip install -U pip setuptools wheel
 #python -m spacy download en_core_web_sm
 #python -m spacy download en_core_web_md
-#python -m spacy download en_core_web_lg
 
 import sys
 import warnings
@@ -23,7 +27,10 @@ def main():
         Yelp_Manager(sys.argv[1], sys.argv[2], sys.argv[3])
         return 0
     elif len(sys.argv) == 5:
-        Yelp_Manager(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+        if sys.argv[4] == "True":
+            Yelp_Manager(sys.argv[1], sys.argv[2], sys.argv[3], True)
+        elif sys.argv[4] == "False":
+            Yelp_Manager(sys.argv[1], sys.argv[2], sys.argv[3], False)
         return 0
     
     print("Incorrect arguments")
