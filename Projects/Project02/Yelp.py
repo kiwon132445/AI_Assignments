@@ -1,12 +1,17 @@
+#pip install sklearn
+#pip install scikit-learn
+#pip install pandas
 #pip install spacy
-#pip install -U spacy[transformers]
 #python -m spacy download en_core_web_lg
-#python -m spacy download en_core_web_trf
+#pip install torch
 
 #unused so far
+#pip install -U spacy[transformers]
+#python -m spacy download en_core_web_trf
+
 #pip install tweet-preprocessor
 #pip install transformers
-#pip install torch
+
 #pip install gensim
 #pip install -U pip setuptools wheel
 #python -m spacy download en_core_web_sm

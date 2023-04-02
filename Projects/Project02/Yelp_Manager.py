@@ -1,10 +1,10 @@
 import pandas as pd
-import numpy as np
 import pickle
 import os.path
 import torch
 import time
 import string
+from tqdm import tqdm
 
 # import gensim
 # from gensim.models import KeyedVectors
@@ -14,11 +14,7 @@ import spacy
 from spacy.lang.en import stop_words
 from spacy.pipeline.lemmatizer import Lemmatizer
 from spacy.language import Language
-from spacy_transformers import Transformer
 from spacy.tokens import DocBin
-
-# from transformers import pipeline
-# from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 import sklearn
 from sklearn import preprocessing
@@ -26,12 +22,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_extraction.text import CountVectorizer
 
+#Unsure imports
+
+
 # Initialization method
 class Yelp_Manager:
     # ------------------------------------------------------------------------------------#
     # Initialized Variables
     text = []
+    vectors = []
+    doc = []
+    
     x = None
+    yelp = None
     # columns
     # review_id user_id business_id stars useful funny cool text date
     input_columns = ['text']
@@ -54,7 +57,6 @@ class Yelp_Manager:
     # ------------------------------------------------------------------------------------#
 
     def __init__(self, filepath='./yelp_dataset/yelp_academic_dataset_review.json', model="", experiment="", nrows=0, preprocessed=True):
-        self.yelp = None
         self.filepath = filepath
         self.model = model
         self.experiment = experiment
@@ -64,8 +66,6 @@ class Yelp_Manager:
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.nlp = spacy.load("en_core_web_lg")
         self.doc_bin = DocBin()
-        # self.nlp = spacy.load("en_core_web_trf")
-        # self.transformer = pipeline("sentiment-analysis", model="roberta-base")
     
     # Loads the file and converts content into useable datatype
     def initialize(self):
@@ -77,18 +77,18 @@ class Yelp_Manager:
     def preprocess_dataset(self):
         self.x_y_split()
         if not self.preprocessed:
-            self.spacy_word_embedding(self.x)
+            self.x['text'] = self.spacy_preprocessing_text(self.x['text'])
             self.save_embedded_json(self.x)
             #self.save_doc_bin()
         
     # Split the data into training, validation, and test sets
     def process_dataset(self):
+        self.x['vectors'] = self.spacy_vectorize(self.x['text'])
         self.train_valid_test_split()
     
     # Converts dataframe content and checks for irrelevant columns
     def convert_yelp(self):
         self.yelp['text'] = self.yelp['text'].astype('str')
-
         for columns in self.yelp.columns:
             if columns == 'review_id':
                 self.irrelevant_columns.append('review_id')
@@ -98,7 +98,6 @@ class Yelp_Manager:
                 self.irrelevant_columns.append('business_id')
             elif columns == 'date':
                 self.irrelevant_columns.append('date')
-
         self.yelp = self.yelp.drop(columns=self.irrelevant_columns)
     
     # Splits dataframe into x and y sets
@@ -111,39 +110,49 @@ class Yelp_Manager:
     def train_valid_test_split(self):
         self.X_train, X_remaining, self.y_train, y_remaining = train_test_split(self.x, self.y, train_size=0.8)
         self.X_valid, self.X_test, self.y_valid, self.y_test = train_test_split(X_remaining, y_remaining, test_size=0.5)
-    
-    # Count vectorizer
-    def count_vectorize(self, dataset):
-        vec = CountVectorizer()
-        return vec.fit_transform(dataset)
 
     # ------------------------------------------------------------------------------------#
-    # Word Embedding
-    def spacy_word_embedding(self, dataset):
-        count = 0
-        increments = 10000
-        checkpoint = increments
-        remaining = len(dataset['text'])
-        starttime = time.time()
-        
-        for doc in self.nlp.pipe(dataset['text'].tolist(), n_process=10, disable=['tok2vec', 'parser', 'senter', 'ner']):
+    # Word Preprocessing
+    def spacy_preprocessing_text(self, dataset_text):
+        i_tqdm = tqdm(total=len(dataset_text))
+        for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'parser', 'senter', 'ner']):
             clean_text = self.clean_text(doc)
-            # self.doc_bin.add(self.nlp(clean_text))
             self.text.append(clean_text)
-            count += 1
-            if count == checkpoint:
-                endtime = time.time()
-                print("Remaining preprocess data:", remaining, " Time past:", endtime-starttime, end='\r')
-                checkpoint += increments
-                remaining -= increments
-                
-        self.x['text'] = self.text
+            i_tqdm.update(1)
+        i_tqdm.close()
+        return self.text
+        
+    def spacy_preprocessing_doc(self, dataset_text):
+        i_tqdm = tqdm(total=len(dataset_text))
+        for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'parser', 'senter', 'ner']):
+            clean_text = self.clean_text(doc)
+            self.doc_bin.add(self.nlp(clean_text))
+            i_tqdm.update(1)
+        i_tqdm.close()        
+        return self.doc_bin
     
     def clean_text(self, doc):
         lowercase = [word.lemma_.lower().strip() if word.lemma_ != "-PRON-" else word.lower_ for word in doc]
         lemmatize = [word for word in lowercase if word not in stop_words.STOP_WORDS and word not in string.punctuation]
         text = " ".join(lemmatize)
         return text
+    
+    # ------------------------------------------------------------------------------------#
+    # Word Embedding
+    
+    # Count vectorizer
+    def count_vectorize(self, text_dataset):
+        vec = CountVectorizer(ngram_range=(1, 1))
+        return vec.fit_transform(text_dataset)
+    
+    def spacy_vectorize(self, dataset_text):
+        i_tqdm = tqdm(total=len(dataset_text))
+        for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'tagger', 'parser', 'senter', 'attribute_ruler', 'lemmatizer', 'ner']):
+            self.vectors.append(doc.vector)
+            i_tqdm.update(1)
+        i_tqdm.close()   
+        return self.vectors
+        
     # ------------------------------------------------------------------------------------#
     # Models
     
@@ -193,12 +202,15 @@ class Yelp_Manager:
     
     # Save word embedded dataset
     def save_embedded_json(self, dataset):
-        dataset.to_json(self.word_embedded_dataset_path_json, orient="records", lines=True)
-        
-#     def save_doc_bin(self):
-#         self.doc_bin.to_disk(self.word_embedded_dataset_path_spacy)
+        if not os.path.isfile(self.word_embedded_dataset_path_json):
+            dataset.to_json(self.word_embedded_dataset_path_json, orient="records", lines=True)
     
-#     def load_doc_bin(self):
-#         if os.path.isfile(self.word_embedded_dataset_path_spacy) and self.preprocessed:
-#             self.doc_bin = DocBin().from_disk(self.word_embedded_dataset_path_spacy)
+    # Save Docbin containing the Spacy docs
+    def save_doc_bin(self):
+        self.doc_bin.to_disk(self.word_embedded_dataset_path_spacy)
+    
+    #Load Docbin containing the docs
+    def load_doc_bin(self):
+        if os.path.isfile(self.word_embedded_dataset_path_spacy) and self.preprocessed:
+            self.doc_bin = DocBin().from_disk(self.word_embedded_dataset_path_spacy)
     #############################################################################################
