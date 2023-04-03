@@ -115,15 +115,17 @@ class Yelp_Manager:
     # Word Preprocessing
     def spacy_preprocessing_text(self, dataset_text):
         i_tqdm = tqdm(total=len(dataset_text))
+        i_tqdm.set_description('Spacy cleaning')
         for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'parser', 'senter', 'ner']):
             clean_text = self.clean_text(doc)
             self.text.append(clean_text)
             i_tqdm.update(1)
         i_tqdm.close()
         return self.text
-        
+    
     def spacy_preprocessing_doc(self, dataset_text):
         i_tqdm = tqdm(total=len(dataset_text))
+        i_tqdm.set_description('Spacy cleaning and embedding')
         for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'parser', 'senter', 'ner']):
             clean_text = self.clean_text(doc)
             self.doc_bin.add(self.nlp(clean_text))
@@ -147,6 +149,7 @@ class Yelp_Manager:
     
     def spacy_vectorize(self, dataset_text):
         i_tqdm = tqdm(total=len(dataset_text))
+        i_tqdm.set_description('Spacy Embedding text')
         for doc in self.nlp.pipe(dataset_text.tolist(), n_process=10, disable=['tok2vec', 'tagger', 'parser', 'senter', 'attribute_ruler', 'lemmatizer', 'ner']):
             self.vectors.append(doc.vector)
             i_tqdm.update(1)
@@ -155,7 +158,7 @@ class Yelp_Manager:
         
     # ------------------------------------------------------------------------------------#
     # Models
-    
+    # Bi_LSTM (RNN) (Bidirectional Long-short term memory)
     
     # ------------------------------------------------------------------------------------#
     # Techniques
